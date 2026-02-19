@@ -1,11 +1,11 @@
 {
-  "id": "T001",
-  "indicator": "192.168.1.10",
-  "type": "IP",
-  "severity": "High",
-  "confidence": 85,
-  "source": "AlienVault OTX",
-  "description": "Known malicious IP linked to botnet activity",
-  "first_seen": "2026-02-10",
-  "last_seen": "2026-02-15"
+  "id": "string",
+  "indicator": "string",
+  "type": "IP | Domain| Hash",
+  "severity": "Low | Medium | High",
+  "confidence": 0-100,
+  "source": "string",
+  "description": "string",
+  "first_seen": "date",
+  "last_seen": "date"
 }
