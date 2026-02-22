@@ -39,3 +39,9 @@ filter.addEventListener("change", function () {
     }
   });
 });
+function fetchThreatData() {
+  console.log("Fetching data from backend API...");
+  // Placeholder for future API call
+}
+
+fetchThreatData();
