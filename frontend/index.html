@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Threat Dashboard</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+  <header>
+    <h1>Threat Intelligence Dashboard</h1>
+  </header>
+
+  <section class="charts">
+    <canvas id="severityChart"></canvas>
+    <canvas id="distributionChart"></canvas>
+  </section>
+  <section class="table-section">
+  <h2>Recent Threats</h2>
+
+  <label for="severityFilter">Filter by Severity:</label>
+  <select id="severityFilter">
+    <option value="All">All</option>
+    <option value="High">High</option>
+    <option value="Medium">Medium</option>
+    <option value="Low">Low</option>
+  </select>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Type</th>
+        <th>Severity</th>
+        <th>Source</th>
+      </tr>
+    </thead>
+    <tbody id="threatTable">
+      <tr data-severity="High">
+        <td>1</td>
+        <td>IP</td>
+        <td>High</td>
+        <td>OTX</td>
+      </tr>
+      <tr data-severity="Medium">
+        <td>2</td>
+        <td>Domain</td>
+        <td>Medium</td>
+        <td>MISP</td>
+      </tr>
+      <tr data-severity="Low">
+        <td>3</td>
+        <td>Hash</td>
+        <td>Low</td>
+        <td>AbuseIPDB</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
