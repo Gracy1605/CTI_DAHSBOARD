@@ -52,3 +52,12 @@ th {
   background-color: #1e293b;
   color: white;
 }
+@media (max-width: 768px) {
+  .charts {
+    flex-direction: column;
+  }
+
+  table {
+    font-size: 14px;
+  }
+}
