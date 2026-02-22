@@ -32,3 +32,23 @@ header {
   justify-content: space-around;
   margin: 30px;
 }
+.table-section {
+  margin: 40px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: center;
+}
+
+th {
+  background-color: #1e293b;
+  color: white;
+}

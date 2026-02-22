@@ -25,3 +25,17 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
 });
+const filter = document.getElementById("severityFilter");
+
+filter.addEventListener("change", function () {
+  const selected = this.value;
+  const rows = document.querySelectorAll("#threatTable tr");
+
+  rows.forEach(row => {
+    if (selected === "All" || row.dataset.severity === selected) {
+      row.style.display = "";
+    } else {
+      row.style.display = "none";
+    }
+  });
+});
