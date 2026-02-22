@@ -1,42 +1,84 @@
 Frontend folder for React dashboard
-Overview:
+# CTI Dashboard – Frontend
 
-This frontend application is part of the Cyber Threat Intelligence (CTI) Platform.
+## Overview
+
+This frontend application is part of the Cyber Threat Intelligence (CTI) Platform.  
 It provides an interactive dashboard that visualizes cyber threat intelligence data collected from open-source CTI feeds.
 
-The dashboard transforms raw threat data into meaningful insights using charts, tables, and filtering mechanisms to support security monitoring and decision-making.
+The dashboard converts raw threat data into meaningful insights using charts, tables, and filtering mechanisms.
 
-objective:
+---
+
+## Objective
 
 The objective of this frontend module is to:
 
-1. Display cyber threat intelligence data visually
-2. Provide severity and type-based analysis
-3. Show threat trends over time
-4. Enable filtering of threats
-5. Prepare the UI for backend API integration
+- Display cyber threat intelligence data visually
+- Provide severity and type-based analysis
+- Show threat trends over time
+- Enable filtering of threats
+- Prepare the UI for backend API integration
 
-Tech Stack:
+---
 
-HTML
-CSS
-javaScript
-Chart.js (for visualizations)
+## Tech Stack
 
-features implemented:
+- HTML
+- CSS
+- JavaScript
+- Chart.js
+- REST API (for backend integration)
 
-Professional dashboard layout
-Threat Type Distribution (Bar Chart)
-Severity Distribution (Pie Chart)
-Threat Trend Over Time (Line Chart)
-Recent Threat Activity Table
-Severity Filter
-Static data rendering
-Placeholder API fetch logic
-Responsive design improvements
+---
 
-how to run:
+## Features Implemented
 
-open project in VS code
-right click index.html
-click "open with live server"
+- Dashboard layout UI
+- Threat Type Distribution (Bar Chart)
+- Severity Distribution (Pie Chart)
+- Threat Trend Over Time (Line Chart)
+- Recent Threat Activity Table
+- Severity Filter
+- Static data rendering
+- Placeholder API fetch logic
+- Responsive design improvements
+
+---
+
+## Planned API Endpoints
+
+The frontend is prepared to consume the following backend APIs:
+
+- GET /threats
+- GET /stats
+- GET /threats?severity=high
+- POST /auth/login
+
+---
+
+## How to Run
+
+1. Clone the repository
+2. Navigate to the frontend folder
+3. Open index.html in a browser
+
+OR
+
+Use Live Server extension in VS Code.
+
+---
+
+## Future Improvements
+
+- Connect to live backend APIs
+- Add authentication UI
+- Add advanced filtering
+- Improve UI/UX design
+
+---
+
+## Developer
+
+Sarika  
+Frontend Engineer – CTI Platform
