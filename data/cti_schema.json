@@ -3,7 +3,7 @@
   "indicator": "string",
   "type": "IP | Domain| Hash",
   "severity": "Low | Medium | High",
-  "confidence": 0-100,
+  "confidence": "0-100",
   "source": "string",
   "description": "string",
   "first_seen": "date",
