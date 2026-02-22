@@ -1,63 +1,87 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Threat Dashboard</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CTI Dashboard</title>
+  <!-- icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-pc6ceSVNJqA1v4zpFI1vKrhwIdrJt1qGXls3x0JgQW9wg/Fpcn7PIm+2ptoYEKrmcHjK14Cc6vVj8y5bVn5KPA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="css/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-
 <body>
+  <div class="app-container">
+    <!-- sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>CTI Dashboard</h2>
+      </div>
+      <nav class="menu">
+        <a href="#" class="menu-item active"><i class="fas fa-home"></i><span>Dashboard</span></a>
+        <a href="#" class="menu-item"><i class="fas fa-rss"></i><span>Threat Feed</span></a>
+        <a href="#" class="menu-item"><i class="fas fa-shield-alt"></i><span>Indicators</span></a>
+        <a href="#" class="menu-item"><i class="fas fa-file-alt"></i><span>Reports</span></a>
+        <a href="#" class="menu-item"><i class="fas fa-cog"></i><span>Settings</span></a>
+      </nav>
+    </aside>
 
-  <header>
-    <h1>Threat Intelligence Dashboard</h1>
-  </header>
+    <!-- main section -->
+    <div class="main-content">
+      <header class="topbar">
+        <h1 class="page-title">Threat Overview</h1>
+        <div class="profile">
+          <i class="fas fa-user-circle"></i>
+          <button class="logout">Logout</button>
+        </div>
+      </header>
 
-  <section class="charts">
-    <canvas id="severityChart"></canvas>
-    <canvas id="distributionChart"></canvas>
-  </section>
-  <section class="table-section">
-  <h2>Recent Threats</h2>
+      <section class="stats-cards">
+        <div class="card">
+          <div class="card-number" id="totalThreats">1234</div>
+          <div class="card-label">Total Threats</div>
+        </div>
+        <div class="card">
+          <div class="card-number" id="highSeverity">321</div>
+          <div class="card-label">High Severity</div>
+        </div>
+        <div class="card">
+          <div class="card-number" id="mediumSeverity">654</div>
+          <div class="card-label">Medium Severity</div>
+        </div>
+        <div class="card">
+          <div class="card-number" id="lowSeverity">259</div>
+          <div class="card-label">Low Severity</div>
+        </div>
+      </section>
 
-  <label for="severityFilter">Filter by Severity:</label>
-  <select id="severityFilter">
-    <option value="All">All</option>
-    <option value="High">High</option>
-    <option value="Medium">Medium</option>
-    <option value="Low">Low</option>
-  </select>
+      <section class="chart-section">
+        <div class="chart-card">
+          <h2>Threat Trends</h2>
+          <canvas id="threatChart"></canvas>
+        </div>
+      </section>
 
-  <table>
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Type</th>
-        <th>Severity</th>
-        <th>Source</th>
-      </tr>
-    </thead>
-    <tbody id="threatTable">
-      <tr data-severity="High">
-        <td>1</td>
-        <td>IP</td>
-        <td>High</td>
-        <td>OTX</td>
-      </tr>
-      <tr data-severity="Medium">
-        <td>2</td>
-        <td>Domain</td>
-        <td>Medium</td>
-        <td>MISP</td>
-      </tr>
-      <tr data-severity="Low">
-        <td>3</td>
-        <td>Hash</td>
-        <td>Low</td>
-        <td>AbuseIPDB</td>
-      </tr>
-    </tbody>
-  </table>
-</section>
+      <section class="table-section">
+        <h2>Recent Threats</h2>
+        <div class="table-container">
+          <table id="threatTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Severity</th>
+                <th>IOC Type</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- rows added by JS -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </div>
 
   <script src="js/main.js"></script>
 </body>
