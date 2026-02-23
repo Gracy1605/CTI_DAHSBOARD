@@ -1,7 +1,13 @@
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-from flask_jwt_extended import JWTManager, jwt_required
+from flask_jwt_extended import (
+    JWTManager,
+    jwt_required,
+    get_jwt,
+    get_jwt_identity,
+    create_access_token
+)
 from models import db, Threat
 from routes.stats import stats_bp
 from routes.auth import auth_bp
@@ -32,12 +38,16 @@ app.register_blueprint(auth_bp)
 def home():
     return "Backend is running with Database + JWT"
 
+
 # 🔐 PROTECTED THREATS ROUTE
 @app.route("/threats")
 @jwt_required()
 def get_threats():
     try:
         severity = request.args.get("severity")
+        search = request.args.get("search")
+        sort_by = request.args.get("sort_by")
+        order = request.args.get("order", "asc")
         page = request.args.get("page", 1, type=int)
         per_page = request.args.get("per_page", 5, type=int)
 
@@ -46,10 +56,28 @@ def get_threats():
 
         query = Threat.query
 
+        # Severity filter
         if severity:
             if severity not in ["high", "medium", "low"]:
                 return jsonify({"error": "Invalid severity value"}), 400
             query = query.filter_by(severity=severity)
+
+        # Search filter
+        if search:
+            query = query.filter(Threat.ioc_value.contains(search))
+
+        # Sorting
+        if sort_by == "severity":
+            if order == "desc":
+                query = query.order_by(Threat.severity.desc())
+            else:
+                query = query.order_by(Threat.severity.asc())
+
+        if sort_by == "first_seen":
+            if order == "desc":
+                query = query.order_by(Threat.first_seen.desc())
+            else:
+                query = query.order_by(Threat.first_seen.asc())
 
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
@@ -83,9 +111,15 @@ def stats():
     return jsonify(result)
 
 
+# 🔐 ADMIN ONLY ROUTE
 @app.route("/add-sample")
 @jwt_required()
 def add_sample():
+    claims = get_jwt()
+
+    if claims["role"] != "admin":
+        return jsonify({"error": "Admin access required"}), 403
+
     sample1 = Threat(
         ioc_type="ip",
         ioc_value="8.8.8.8",
@@ -107,6 +141,18 @@ def add_sample():
     db.session.commit()
 
     return "Sample data inserted!"
+
+
+# 🔁 REFRESH TOKEN ROUTE
+@app.route("/refresh", methods=["POST"])
+@jwt_required(refresh=True)
+def refresh():
+    identity = get_jwt_identity()
+    new_access = create_access_token(identity=identity)
+
+    return jsonify({
+        "access_token": new_access
+    })
 
 
 if __name__ == "__main__":
