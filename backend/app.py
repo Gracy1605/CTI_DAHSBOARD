@@ -1,9 +1,19 @@
 from flask import Flask, jsonify, request
+from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
+from flask_jwt_extended import JWTManager, jwt_required
 from models import db, Threat
+from routes.stats import stats_bp
+from routes.auth import auth_bp
 
 app = Flask(__name__)
+CORS(app)
 
-# Database Configuration
+# ================= JWT CONFIG =================
+app.config["JWT_SECRET_KEY"] = "super-secret-key"
+jwt = JWTManager(app)
+
+# ================= DATABASE CONFIG =================
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///threats.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -12,12 +22,19 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
+# ================= BLUEPRINTS =================
+app.register_blueprint(stats_bp)
+app.register_blueprint(auth_bp)
+
+# ================= ROUTES =================
+
 @app.route("/")
 def home():
-    return "Backend is running with Database"
+    return "Backend is running with Database + JWT"
 
-from flask import request
+# 🔐 PROTECTED THREATS ROUTE
 @app.route("/threats")
+@jwt_required()
 def get_threats():
     try:
         severity = request.args.get("severity")
@@ -43,10 +60,13 @@ def get_threats():
             "data": [t.to_dict() for t in pagination.items]
         })
 
-    except Exception as e:
+    except Exception:
         return jsonify({"error": "Something went wrong"}), 500
 
+
+# 🔐 PROTECTED STATS ROUTE
 @app.route("/stats")
+@jwt_required()
 def stats():
     total = Threat.query.count()
     high = Threat.query.filter_by(severity="high").count()
@@ -62,7 +82,9 @@ def stats():
 
     return jsonify(result)
 
+
 @app.route("/add-sample")
+@jwt_required()
 def add_sample():
     sample1 = Threat(
         ioc_type="ip",
@@ -86,6 +108,6 @@ def add_sample():
 
     return "Sample data inserted!"
 
+
 if __name__ == "__main__":
     app.run(debug=True)
-
