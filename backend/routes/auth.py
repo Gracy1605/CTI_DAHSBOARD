@@ -27,6 +27,7 @@ def login():
         )
 
         refresh_token = create_refresh_token(identity=username)
+        )
         return jsonify({
             "success": True,
             "message": "Login successful",
