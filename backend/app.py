@@ -1,29 +1,29 @@
+from dotenv import load_dotenv
+load_dotenv()
 from flask import Flask, jsonify, request
-from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_jwt_extended import (
-    JWTManager,
     jwt_required,
     get_jwt,
     get_jwt_identity,
     create_access_token
 )
-from models import db, Threat
+
+from extensions import db, jwt
+from models import Threat
 from routes.stats import stats_bp
 from routes.auth import auth_bp
+from config import Config
 
 app = Flask(__name__)
 CORS(app)
 
-# ================= JWT CONFIG =================
-app.config["JWT_SECRET_KEY"] = "super-secret-key"
-jwt = JWTManager(app)
+# ================= CONFIG =================
+app.config.from_object(Config)
 
-# ================= DATABASE CONFIG =================
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///threats.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
+# ================= INIT EXTENSIONS =================
 db.init_app(app)
+jwt.init_app(app)
 
 with app.app_context():
     db.create_all()
@@ -56,28 +56,23 @@ def get_threats():
 
         query = Threat.query
 
-        # Severity filter
         if severity:
             if severity not in ["high", "medium", "low"]:
                 return jsonify({"error": "Invalid severity value"}), 400
             query = query.filter_by(severity=severity)
 
-        # Search filter
         if search:
             query = query.filter(Threat.ioc_value.contains(search))
 
-        # Sorting
         if sort_by == "severity":
-            if order == "desc":
-                query = query.order_by(Threat.severity.desc())
-            else:
-                query = query.order_by(Threat.severity.asc())
+            query = query.order_by(
+                Threat.severity.desc() if order == "desc" else Threat.severity.asc()
+            )
 
         if sort_by == "first_seen":
-            if order == "desc":
-                query = query.order_by(Threat.first_seen.desc())
-            else:
-                query = query.order_by(Threat.first_seen.asc())
+            query = query.order_by(
+                Threat.first_seen.desc() if order == "desc" else Threat.first_seen.asc()
+            )
 
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
@@ -101,14 +96,12 @@ def stats():
     medium = Threat.query.filter_by(severity="medium").count()
     low = Threat.query.filter_by(severity="low").count()
 
-    result = {
+    return jsonify({
         "total_threats": total,
         "high": high,
         "medium": medium,
         "low": low
-    }
-
-    return jsonify(result)
+    })
 
 
 # 🔐 ADMIN ONLY ROUTE
@@ -153,7 +146,30 @@ def refresh():
     return jsonify({
         "access_token": new_access
     })
+# ================= GLOBAL ERROR HANDLERS =================
 
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({
+        "success": False,
+        "error": "Route not found"
+    }), 404
+
+
+@app.errorhandler(500)
+def server_error(error):
+    return jsonify({
+        "success": False,
+        "error": "Internal server error"
+    }), 500
+
+
+@app.errorhandler(400)
+def bad_request(error):
+    return jsonify({
+        "success": False,
+        "error": "Bad request"
+    }), 400
 
 if __name__ == "__main__":
     app.run(debug=True)
