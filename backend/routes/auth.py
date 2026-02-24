@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_refresh_token
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -20,11 +21,18 @@ def login():
     password = data.get("password")
 
     if username == USER_DATA["username"] and password == USER_DATA["password"]:
-        access_token = create_access_token(identity=username)
+        access_token = create_access_token(
+            identity=username,
+            additional_claims={"role": "admin"}
+        )
+
+        refresh_token = create_refresh_token(identity=username)
+        )
         return jsonify({
             "success": True,
             "message": "Login successful",
-            "access_token": access_token
+            "access_token": access_token,
+            "refresh_token": refresh_token
         }), 200
     else:
         return jsonify({
