@@ -1,7 +1,5 @@
-from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-
-db = SQLAlchemy()
+from extensions import db
 
 class Threat(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -21,6 +19,6 @@ class Threat(db.Model):
             "severity": self.severity,
             "category": self.category,
             "source": self.source,
-            "first_seen": self.first_seen,
-            "last_seen": self.last_seen
+            "first_seen": self.first_seen.isoformat() if self.first_seen else None,
+            "last_seen": self.last_seen.isoformat() if self.last_seen else None,
         }

@@ -1,19 +1,20 @@
 from dotenv import load_dotenv
 load_dotenv()
-from flask import Flask, jsonify, request
+
+from flask import Flask, jsonify
 from flask_cors import CORS
-from flask_jwt_extended import (
-    jwt_required,
-    get_jwt,
-    get_jwt_identity,
-    create_access_token
-)
+import requests
+from datetime import datetime
+import threading
+import time
 
 from extensions import db, jwt
+from config import Config
 from models import Threat
+
 from routes.stats import stats_bp
 from routes.auth import auth_bp
-from config import Config
+from routes.threats import threats_bp
 
 app = Flask(__name__)
 CORS(app)
@@ -31,145 +32,100 @@ with app.app_context():
 # ================= BLUEPRINTS =================
 app.register_blueprint(stats_bp)
 app.register_blueprint(auth_bp)
+app.register_blueprint(threats_bp)
+
+# ================= BACKEND FUNCTION: AUTO-FETCH LIVE THREATS =================
+def auto_fetch_live_threats(interval_minutes=10):
+    """
+    Background thread: fetch live threats from AlienVault OTX every `interval_minutes`.
+    """
+    def fetch_loop():
+        while True:
+            try:
+                api_key = app.config.get("OTX_API_KEY")
+                if not api_key:
+                    print("No OTX API key configured")
+                    return
+
+                headers = {"X-OTX-API-KEY": api_key}
+                url = "https://otx.alienvault.com/api/v1/pulses/subscribed?limit=20"
+                resp = requests.get(url, headers=headers, timeout=10)
+                if resp.status_code != 200:
+                    print(f"Failed to fetch OTX data: {resp.status_code}")
+                    time.sleep(interval_minutes * 60)
+                    continue
+
+                data = resp.json()
+                inserted = 0
+                with app.app_context():
+                    for pulse in data.get("results", []):
+                        for indicator in pulse.get("indicators", []):
+                            ioc_type = indicator.get("type")
+                            ioc_value = indicator.get("indicator")
+
+                            if not ioc_type or not ioc_value:
+                                continue
+
+                            # Normalize ioc_type
+                            if ioc_type.lower() in ["ipv4", "ipv6"]:
+                                ioc_type_norm = "ip"
+                            elif ioc_type.lower() == "domain":
+                                ioc_type_norm = "domain"
+                            elif ioc_type.lower() in ["sha1", "sha256", "md5"]:
+                                ioc_type_norm = "hash"
+                            else:
+                                ioc_type_norm = "other"
+
+                            # Deduplicate
+                            existing = Threat.query.filter_by(
+                                ioc_type=ioc_type_norm, ioc_value=ioc_value
+                            ).first()
+                            if existing:
+                                continue
+
+                            # Add new threat
+                            new_threat = Threat(
+                                ioc_type=ioc_type_norm,
+                                ioc_value=ioc_value,
+                                severity="high",
+                                category=pulse.get("name", "unknown"),
+                                source="AlienVault",
+                                first_seen=datetime.utcnow(),
+                                last_seen=datetime.utcnow()
+                            )
+                            db.session.add(new_threat)
+                            inserted += 1
+                    if inserted > 0:
+                        db.session.commit()
+                        print(f"[AUTO-FETCH] Inserted {inserted} new threats")
+            except Exception as e:
+                print(f"[AUTO-FETCH] Error: {str(e)}")
+
+            time.sleep(interval_minutes * 60)
+
+    thread = threading.Thread(target=fetch_loop, daemon=True)
+    thread.start()
+
+# Start auto-fetch thread on backend start
+auto_fetch_live_threats(interval_minutes=10)  # adjust interval as needed
 
 # ================= ROUTES =================
-
 @app.route("/")
 def home():
     return "Backend is running with Database + JWT"
 
-
-# 🔐 PROTECTED THREATS ROUTE
-@app.route("/threats")
-@jwt_required()
-def get_threats():
-    try:
-        severity = request.args.get("severity")
-        search = request.args.get("search")
-        sort_by = request.args.get("sort_by")
-        order = request.args.get("order", "asc")
-        page = request.args.get("page", 1, type=int)
-        per_page = request.args.get("per_page", 5, type=int)
-
-        if page < 1 or per_page < 1:
-            return jsonify({"error": "Page and per_page must be positive numbers"}), 400
-
-        query = Threat.query
-
-        if severity:
-            if severity not in ["high", "medium", "low"]:
-                return jsonify({"error": "Invalid severity value"}), 400
-            query = query.filter_by(severity=severity)
-
-        if search:
-            query = query.filter(Threat.ioc_value.contains(search))
-
-        if sort_by == "severity":
-            query = query.order_by(
-                Threat.severity.desc() if order == "desc" else Threat.severity.asc()
-            )
-
-        if sort_by == "first_seen":
-            query = query.order_by(
-                Threat.first_seen.desc() if order == "desc" else Threat.first_seen.asc()
-            )
-
-        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
-
-        return jsonify({
-            "total": pagination.total,
-            "page": pagination.page,
-            "pages": pagination.pages,
-            "data": [t.to_dict() for t in pagination.items]
-        })
-
-    except Exception:
-        return jsonify({"error": "Something went wrong"}), 500
-
-
-# 🔐 PROTECTED STATS ROUTE
-@app.route("/stats")
-@jwt_required()
-def stats():
-    total = Threat.query.count()
-    high = Threat.query.filter_by(severity="high").count()
-    medium = Threat.query.filter_by(severity="medium").count()
-    low = Threat.query.filter_by(severity="low").count()
-
-    return jsonify({
-        "total_threats": total,
-        "high": high,
-        "medium": medium,
-        "low": low
-    })
-
-
-# 🔐 ADMIN ONLY ROUTE
-@app.route("/add-sample")
-@jwt_required()
-def add_sample():
-    claims = get_jwt()
-
-    if claims["role"] != "admin":
-        return jsonify({"error": "Admin access required"}), 403
-
-    sample1 = Threat(
-        ioc_type="ip",
-        ioc_value="8.8.8.8",
-        severity="high",
-        category="malware",
-        source="AlienVault"
-    )
-
-    sample2 = Threat(
-        ioc_type="domain",
-        ioc_value="example.com",
-        severity="medium",
-        category="phishing",
-        source="AbuseIPDB"
-    )
-
-    db.session.add(sample1)
-    db.session.add(sample2)
-    db.session.commit()
-
-    return "Sample data inserted!"
-
-
-# 🔁 REFRESH TOKEN ROUTE
-@app.route("/refresh", methods=["POST"])
-@jwt_required(refresh=True)
-def refresh():
-    identity = get_jwt_identity()
-    new_access = create_access_token(identity=identity)
-
-    return jsonify({
-        "access_token": new_access
-    })
 # ================= GLOBAL ERROR HANDLERS =================
-
 @app.errorhandler(404)
 def not_found(error):
-    return jsonify({
-        "success": False,
-        "error": "Route not found"
-    }), 404
-
+    return {"success": False, "error": "Route not found"}, 404
 
 @app.errorhandler(500)
 def server_error(error):
-    return jsonify({
-        "success": False,
-        "error": "Internal server error"
-    }), 500
-
+    return {"success": False, "error": "Internal server error"}, 500
 
 @app.errorhandler(400)
 def bad_request(error):
-    return jsonify({
-        "success": False,
-        "error": "Bad request"
-    }), 400
+    return {"success": False, "error": "Bad request"}, 400
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
