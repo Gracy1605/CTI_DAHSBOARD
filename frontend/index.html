@@ -85,8 +85,28 @@
                 </section>
 
                 <section class="chart-panel">
-                    <h3>Severity Distribution</h3>
-                    <canvas id="severity-chart"></canvas>
+                    <div class="chart-tabs" id="chart-tabs">
+                        <button class="chart-tab active" data-chart="severity">Severity Pie</button>
+                        <button class="chart-tab" data-chart="category">Category Bar</button>
+                        <button class="chart-tab" data-chart="trend">Trend Line</button>
+                    </div>
+
+                    <div class="chart-contents">
+                        <div class="chart-content active" data-chart="severity">
+                            <h3>Severity Distribution</h3>
+                            <canvas id="severity-chart"></canvas>
+                        </div>
+
+                        <div class="chart-content" data-chart="category">
+                            <h3>Threats by Category</h3>
+                            <canvas id="category-chart"></canvas>
+                        </div>
+
+                        <div class="chart-content" data-chart="trend">
+                            <h3>30-Day Threat Trend</h3>
+                            <canvas id="trend-chart"></canvas>
+                        </div>
+                    </div>
                 </section>
 
                 <div id="general-error" class="error-text"></div>

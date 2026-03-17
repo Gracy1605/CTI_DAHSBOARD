@@ -25,10 +25,14 @@ const threatTableBody = document.querySelector('#threat-table tbody');
 const prevPageBtn = document.getElementById('prev-page');
 const nextPageBtn = document.getElementById('next-page');
 const paginationInfo = document.getElementById('pagination-info');
+const chartTabs = document.getElementById('chart-tabs');
+
 const generalError = document.getElementById('general-error');
 const loginError = document.getElementById('login-error');
 
 let severityChart = null;
+let categoryChart = null;
+let trendChart = null;
 
 function storeTokens(tokens) {
   try {
@@ -180,18 +184,19 @@ function renderTable(threats) {
   });
 }
 
-function renderChart(stats) {
+function renderSeverityChart(stats) {
   if (!stats) return;
   const ctx = document.getElementById('severity-chart').getContext('2d');
 
-  // Destroy existing chart if it exists
   if (severityChart) {
     severityChart.destroy();
     severityChart = null;
   }
 
   const total = (stats.high || 0) + (stats.medium || 0) + (stats.low || 0);
-  if (total === 0) return; // Don't render empty chart
+  if (total === 0) {
+    return;
+  }
 
   severityChart = new Chart(ctx, {
     type: 'pie',
@@ -207,18 +212,9 @@ function renderChart(stats) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      layout: {
-        padding: 10
-      },
+      layout: { padding: 10 },
       plugins: {
-        legend: {
-          position: 'bottom',
-          labels: {
-            color: '#dcefff',
-            padding: 15,
-            font: { size: 12 }
-          }
-        },
+        legend: { position: 'bottom', labels: { color: '#dcefff', padding: 15, font: { size: 12 } } },
         tooltip: {
           callbacks: {
             label: function(context) {
@@ -232,6 +228,99 @@ function renderChart(stats) {
       }
     }
   });
+}
+
+function renderCategoryChart(stats) {
+  if (categoryChart) {
+    categoryChart.destroy();
+    categoryChart = null;
+  }
+
+  const categories = Array.isArray(stats.categories) && stats.categories.length ? stats.categories : [];
+  if (!categories.length) {
+    return;
+  }
+
+  const labels = categories.map(item => item.category);
+  const data = categories.map(item => item.count);
+
+  const ctx = document.getElementById('category-chart').getContext('2d');
+  categoryChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Threat Count',
+        data,
+        backgroundColor: labels.map((_, i) => `hsla(${(i * 40) % 360}, 85%, 62%, .8)`),
+        borderColor: '#79c0ff',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { ticks: { color: '#d4e5ff' } },
+        y: { beginAtZero: true, ticks: { color: '#d4e5ff' } }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: { mode: 'index', intersect: false }
+      }
+    }
+  });
+}
+
+function renderTrendChart(stats) {
+  if (trendChart) {
+    trendChart.destroy();
+    trendChart = null;
+  }
+
+  const timeline = Array.isArray(stats.timeline) && stats.timeline.length ? stats.timeline : [];
+  if (!timeline.length) {
+    return;
+  }
+
+  const labels = timeline.map(point => point.date);
+  const data = timeline.map(point => point.count);
+
+  const ctx = document.getElementById('trend-chart').getContext('2d');
+  trendChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Threats/Day',
+        data,
+        fill: true,
+        backgroundColor: 'rgba(31, 144, 255, 0.2)',
+        borderColor: '#1f90ff',
+        tension: 0.25,
+        pointRadius: 3,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { ticks: { color: '#d4e5ff' } },
+        y: { beginAtZero: true, ticks: { color: '#d4e5ff' } }
+      },
+      plugins: {
+        legend: { labels: { color: '#c4deff' } },
+        tooltip: { mode: 'index', intersect: false }
+      }
+    }
+  });
+}
+
+function renderChart(stats) {
+  if (!stats) return;
+  renderSeverityChart(stats);
+  renderCategoryChart(stats);
+  renderTrendChart(stats);
 }
 
 // ===================== NEW AUTO-FETCH =====================
@@ -265,6 +354,17 @@ function bindEvents() {
 
   prevPageBtn.addEventListener('click', () => { if(state.page>1){ state.page--; fetchThreats(); }});
   nextPageBtn.addEventListener('click', () => { if(state.page<state.pages){ state.page++; fetchThreats(); }});
+
+  chartTabs?.addEventListener('click', (event) => {
+    const btn = event.target.closest('.chart-tab');
+    if (!btn) return;
+    const key = btn.dataset.chart;
+
+    document.querySelectorAll('.chart-tab').forEach(tab => tab.classList.toggle('active', tab === btn));
+    document.querySelectorAll('.chart-content').forEach(content => {
+      content.classList.toggle('active', content.dataset.chart === key);
+    });
+  });
 }
 
 async function init() {
