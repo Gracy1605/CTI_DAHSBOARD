@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CTI Dashboard</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div id="app" class="app-container">
+        <div id="login-screen" class="screen active">
+            <div class="card login-card">
+                <h2>CTI Dashboard Login</h2>
+                <div class="input-group"><label for="username">Username</label><input id="username" type="text" placeholder="admin" /></div>
+                <div class="input-group"><label for="password">Password</label><input id="password" type="password" placeholder="admin123" /></div>
+                <button id="login-btn" class="btn btn-primary">Login</button>
+                <div id="login-error" class="error-text"></div>
+            </div>
+        </div>
+
+        <div id="dashboard-screen" class="screen">
+            <header class="topbar">
+                <div class="brand">CTI SOC Dashboard</div>
+                <button id="logout-btn" class="btn btn-secondary">Logout</button>
+            </header>
+            <main class="main-content">
+                <section class="stats-panel" id="stats-panel">
+                    <div class="stat-card"><h4>Total Threats</h4><p id="total-threats">0</p></div>
+                    <div class="stat-card"><h4>High Severity</h4><p id="high-threats">0</p></div>
+                    <div class="stat-card"><h4>Medium Severity</h4><p id="medium-threats">0</p></div>
+                    <div class="stat-card"><h4>Low Severity</h4><p id="low-threats">0</p></div>
+                </section>
+
+                <section class="controls-panel">
+                    <div class="control-group">
+                        <input id="search-input" type="text" placeholder="Search IOC value..." />
+                        <button id="search-btn" class="btn btn-primary btn-sm">Search</button>
+                    </div>
+                    <div class="control-group">
+                        <label for="severity-filter">Severity</label>
+                        <select id="severity-filter">
+                            <option value="">All</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="sort-by">Sort By</label>
+                        <select id="sort-by">
+                            <option value="first_seen">First Seen</option>
+                            <option value="severity">Severity</option>
+                        </select>
+                        <select id="order-by">
+                            <option value="asc">Asc</option>
+                            <option value="desc">Desc</option>
+                        </select>
+                    </div>
+                </section>
+
+                <section class="table-panel">
+                    <table id="threat-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Indicator</th>
+                                <th>Type</th>
+                                <th>Severity</th>
+                                <th>Category</th>
+                                <th>Source</th>
+                                <th>First Seen</th>
+                                <th>Last Seen</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </section>
+
+                <section class="pagination-panel">
+                    <button id="prev-page" class="btn btn-secondary btn-sm">Previous</button>
+                    <span id="pagination-info">Page 1 of 1</span>
+                    <button id="next-page" class="btn btn-secondary btn-sm">Next</button>
+                </section>
+
+                <section class="chart-panel">
+                    <h3>Severity Distribution</h3>
+                    <canvas id="severity-chart"></canvas>
+                </section>
+
+                <div id="general-error" class="error-text"></div>
+            </main>
+        </div>
+
+    </div>
+    <script src="js/main.js"></script>
+</body>
+</html>
